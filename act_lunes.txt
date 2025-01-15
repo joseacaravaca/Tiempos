@@ -1,3 +1,5 @@
 English File, 60
-Anki, 30
-Geografia, 10
+Pausa_1,3
+Anki, 27
+Pausa_2,2
+Geografia, 8

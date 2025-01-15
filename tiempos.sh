@@ -11,5 +11,3 @@ fi
 
 # Abrir un terminal y ejecutar el script
 konsole --noclose -e python3 "$RUTA_SCRIPT"
-# Abrir un terminal y ejecutar el script
-konsole --noclose -e python3 "$RUTA_SCRIPT"
