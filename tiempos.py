@@ -47,7 +47,7 @@ def calcular_tiempos(actividades, tiempo_disponible):
         tiempos_asignados.append((nombre, round(tiempo_asignado, 2)))
     return tiempos_asignados
 
-# Función para guardar resultados en un archivo CSV
+# Función para guardar resultados de la última ejecución en un archivo CSV
 def guardar_resultados_csv(nombre_archivo, resultados):
     try:
         with open(nombre_archivo, 'w', newline='') as archivo:
@@ -57,6 +57,17 @@ def guardar_resultados_csv(nombre_archivo, resultados):
         print(f"Resultados guardados en {nombre_archivo}")
     except Exception as e:
         print(f"Error guardando el archivo CSV: {e}")
+
+# Función para registrar cada ejecución en un archivo CSV
+def registrar_actividades(nombre_archivo, resultados):
+    try:
+        with open(nombre_archivo, 'a', newline='') as archivo:
+            escritor = csv.writer(archivo)
+            for nombre, tiempo in resultados:
+                escritor.writerow([datetime.now().strftime('%Y-%m-%d %H:%M:%S'), nombre, tiempo])
+        print(f"Ejecución registrada en {nombre_archivo}")
+    except Exception as e:
+        print(f"Error guardando el archivo de actividades: {e}")
 
 # Solicitar tiempo disponible o hora de finalización
 def obtener_tiempo_disponible():
@@ -79,20 +90,6 @@ def obtener_tiempo_disponible():
         print("Opción no válida. Intente de nuevo.")
         return obtener_tiempo_disponible()
     return tiempo_disponible
-
-# Función para leer el archivo CSV de resultados
-def leer_resultados_csv(nombre_archivo):
-    actividades = []
-    try:
-        with open(nombre_archivo, 'r') as archivo:
-            lector = csv.reader(archivo)
-            next(lector)  # Saltar la cabecera
-            for fila in lector:
-                actividades.append((fila[0], float(fila[1])))
-        return actividades
-    except Exception as e:
-        print(f"Error leyendo el archivo CSV: {e}")
-        return []
 
 # Función para emitir un sonido de campana
 def emitir_sonido(nombre_archivo):
@@ -144,12 +141,22 @@ def main():
     tiempo_disponible = obtener_tiempo_disponible()
     resultados = calcular_tiempos(actividades, tiempo_disponible)
 
+    # Guardar solo la última ejecución en resultados.csv
     archivo_resultados = "resultados.csv"
     guardar_resultados_csv(archivo_resultados, resultados)
 
-    # Leer las actividades desde el archivo CSV generado
-    actividades_csv = leer_resultados_csv(archivo_resultados)
+    # Registrar todas las ejecuciones en actividades.csv
+    archivo_actividades_csv = "actividades.csv"
+    registrar_actividades(archivo_actividades_csv, resultados)
+
+    # Leer las actividades desde los resultados de la última ejecución
+    actividades_csv = resultados
+
     if actividades_csv:
+        print("\nActividades cargadas desde el CSV:")
+        for actividad, tiempo in actividades_csv:
+            print(f"- {actividad}: {tiempo} minutos")
+
         modo_pausa = input("¿Desea ejecutar con pausas entre tareas (S/N)? ").strip().lower() == 's'
         iniciar_temporizador(actividades_csv, modo_pausa)
 
