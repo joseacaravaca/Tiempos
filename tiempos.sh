@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Ruta completa al archivo Tiempos.py
-RUTA_SCRIPT="/home/jacv/Python/Proyectos/Tiempos/tiempos.py"
+RUTA_SCRIPT="/home/jacv/Python/Proyectos/Tiempos/tiempos_ui.py"
 
 # Verificar si el archivo existe
 if [ ! -f "$RUTA_SCRIPT" ]; then
@@ -9,5 +9,5 @@ if [ ! -f "$RUTA_SCRIPT" ]; then
     exit 1
 fi
 
-# Abrir un terminal y ejecutar el script
-konsole --noclose -e python3 "$RUTA_SCRIPT"
+# Abrir ejecutar el script
+python3 "$RUTA_SCRIPT"

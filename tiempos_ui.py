@@ -1,6 +1,6 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox
-import csv
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox
 from datetime import datetime, timedelta
 import time
 import os
@@ -32,23 +32,52 @@ def emitir_sonido(nombre_archivo):
     if os.path.exists(ruta_sonido):
         os.system(f"aplay {ruta_sonido} > /dev/null 2>&1")
 
+# Variables de control globales para pausa
+pausado = False
+
 # Temporizador
 def iniciar_temporizador(actividades, modo_pausa):
-    for actividad, tiempo in actividades:
+    global pausado
+    for idx, (actividad, tiempo) in enumerate(actividades):
         tiempo_restante = tiempo * 60  # Convertir minutos a segundos
+        tiempo_para_beep = 300  # 5 minutos en segundos
+        progreso_bar['maximum'] = tiempo_restante
         while tiempo_restante > 0:
+            if pausado:
+                status_label.config(text="PAUSA", font=("Arial", 16, "bold"))
+                root.update()
+                time.sleep(1)
+                continue
+
             minutos, segundos = divmod(tiempo_restante, 60)
-            status_label.config(text=f"Tarea actual: {actividad} - Tiempo restante: {int(minutos):02d}:{int(segundos):02d}")
+            status_label.config(text=f"Tarea actual: {actividad} - Tiempo restante: {int(minutos):02d}:{int(segundos):02d}", font=("Arial", 16, "bold"))
+            progreso_bar['value'] = tiempo_restante
             root.update()
             time.sleep(1)
             tiempo_restante -= 1
 
+            # Emitir un beep cada 5 minutos
+            if tiempo_restante % tiempo_para_beep == 0 and tiempo_restante > 0:
+                emitir_sonido("beep.wav")
+
         emitir_sonido("campana.wav")
+        # Cambiar color de tarea completada
+        tareas_list.itemconfig(idx, {'fg': 'gray'})
         if modo_pausa:
             messagebox.showinfo("Tarea completada", f"Tarea '{actividad}' completada. Presione OK para continuar.")
 
-    status_label.config(text="Todas las tareas han sido completadas.")
-    emitir_sonido("campana.wav")
+    status_label.config(text="Todas las tareas han sido completadas.", font=("Arial", 16, "bold"))
+    progreso_bar['value'] = 0
+    emitir_sonido("fin.wav")
+
+# Función para pausar o reanudar
+def toggle_pausa():
+    global pausado
+    pausado = not pausado
+    if pausado:
+        pausa_button.config(text="Reanudar")
+    else:
+        pausa_button.config(text="Pausar")
 
 # Función para iniciar la ejecución
 def ejecutar():
@@ -78,12 +107,6 @@ def ejecutar():
 
     resultados = calcular_tiempos(actividades, tiempo_disponible)
 
-    # Guardar resultados en CSV
-    with open("resultados.csv", 'w', newline='') as archivo:
-        escritor = csv.writer(archivo)
-        escritor.writerow(["Nombre Actividad", "Tiempo Asignado (minutos)"])
-        escritor.writerows(resultados)
-
     # Mostrar las actividades en la interfaz
     tareas_list.delete(0, tk.END)
     for actividad, tiempo in resultados:
@@ -102,7 +125,7 @@ def seleccionar_archivo():
 # Configuración de la ventana principal
 root = tk.Tk()
 root.title("Gestor de Tiempos")
-root.geometry("600x400")
+root.geometry("600x450")
 
 # Variables de control
 file_var = tk.StringVar()
@@ -147,10 +170,19 @@ tareas_list = tk.Listbox(tareas_frame, height=10, width=50, yscrollcommand=scrol
 tareas_list.pack(side=tk.LEFT, fill=tk.BOTH)
 scrollbar.config(command=tareas_list.yview)
 
-start_button = tk.Button(root, text="Iniciar", command=ejecutar)
-start_button.pack(pady=10)
+buttons_frame = tk.Frame(root)
+buttons_frame.pack(pady=10)
+
+start_button = tk.Button(buttons_frame, text="Iniciar", command=ejecutar)
+start_button.pack(side=tk.LEFT, padx=10)
+
+pausa_button = tk.Button(buttons_frame, text="Pausar", command=toggle_pausa)
+pausa_button.pack(side=tk.LEFT, padx=10)
 
 status_label = tk.Label(root, text="Seleccione un archivo y configure el tiempo para comenzar.")
 status_label.pack(pady=10)
+
+progreso_bar = tk.ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
+progreso_bar.pack(pady=10)
 
 root.mainloop()
