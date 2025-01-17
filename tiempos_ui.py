@@ -1,10 +1,10 @@
 import tkinter as tk
-import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from datetime import datetime, timedelta
 import time
 import os
 import threading
+import csv
 
 # Función para leer actividades desde un archivo
 def leer_actividades(nombre_archivo):
@@ -26,6 +26,17 @@ def calcular_tiempos(actividades, tiempo_disponible):
         tiempos_asignados.append((nombre, round(tiempo_asignado, 2)))
     return tiempos_asignados
 
+# Función para registrar actividades completadas con bloqueo
+registro_lock = threading.Lock()
+def registrar_actividad(nombre_archivo, actividad, tiempo):
+    try:
+        with registro_lock:
+            with open(nombre_archivo, 'a', newline='') as archivo:
+                escritor = csv.writer(archivo)
+                escritor.writerow([datetime.now().strftime('%Y-%m-%d %H:%M:%S'), actividad, tiempo])
+    except Exception as e:
+        print(f"Error al registrar la actividad: {e}")
+
 # Función para emitir sonido
 def emitir_sonido(nombre_archivo):
     ruta_sonido = os.path.join(os.path.dirname(__file__), nombre_archivo)
@@ -40,17 +51,18 @@ def iniciar_temporizador(actividades, modo_pausa):
     global pausado
     for idx, (actividad, tiempo) in enumerate(actividades):
         tiempo_restante = tiempo * 60  # Convertir minutos a segundos
-        tiempo_para_beep = 300  # 5 minutos en segundos
         progreso_bar['maximum'] = tiempo_restante
+        tiempo_para_beep = 300  # 5 minutos en segundos
+
         while tiempo_restante > 0:
             if pausado:
-                status_label.config(text="PAUSA", font=("Arial", 16, "bold"))
+                status_label.config(text="PAUSA", font=("Arial", 12, "bold"))
                 root.update()
                 time.sleep(1)
                 continue
 
             minutos, segundos = divmod(tiempo_restante, 60)
-            status_label.config(text=f"Tarea actual: {actividad} - Tiempo restante: {int(minutos):02d}:{int(segundos):02d}", font=("Arial", 16, "bold"))
+            status_label.config(text=f"Tarea: {actividad} - {int(minutos):02d}:{int(segundos):02d}", font=("Arial", 12, "bold"))
             progreso_bar['value'] = tiempo_restante
             root.update()
             time.sleep(1)
@@ -61,12 +73,15 @@ def iniciar_temporizador(actividades, modo_pausa):
                 emitir_sonido("beep.wav")
 
         emitir_sonido("campana.wav")
+        registrar_actividad("registro.csv", actividad, tiempo)
+
         # Cambiar color de tarea completada
         tareas_list.itemconfig(idx, {'fg': 'gray'})
+
         if modo_pausa:
             messagebox.showinfo("Tarea completada", f"Tarea '{actividad}' completada. Presione OK para continuar.")
 
-    status_label.config(text="Todas las tareas han sido completadas.", font=("Arial", 16, "bold"))
+    status_label.config(text="Todas las tareas completadas.", font=("Arial", 12, "bold"))
     progreso_bar['value'] = 0
     emitir_sonido("fin.wav")
 
@@ -119,13 +134,13 @@ def ejecutar():
 
 # Función para seleccionar archivo
 def seleccionar_archivo():
-    archivo = filedialog.askopenfilename(filetypes=[("Archivos de texto", "*.txt")])
+    archivo = filedialog.askopenfilename(filetypes=[("Archivos *.act", "*.act")])
     file_var.set(archivo)
 
 # Configuración de la ventana principal
 root = tk.Tk()
 root.title("Gestor de Tiempos")
-root.geometry("600x450")
+root.geometry("500x450")
 
 # Variables de control
 file_var = tk.StringVar()
@@ -134,55 +149,55 @@ pausa_var = tk.IntVar(value=1)
 
 # Widgets
 file_frame = tk.Frame(root)
-file_frame.pack(pady=10)
+file_frame.pack(pady=5)
 
 file_label = tk.Label(file_frame, text="Archivo de actividades:")
 file_label.pack(side=tk.LEFT, padx=5)
 
-file_entry = tk.Entry(file_frame, textvariable=file_var, width=40)
+file_entry = tk.Entry(file_frame, textvariable=file_var, width=30)
 file_entry.pack(side=tk.LEFT, padx=5)
 
 file_button = tk.Button(file_frame, text="Seleccionar", command=seleccionar_archivo)
 file_button.pack(side=tk.LEFT, padx=5)
 
 time_frame = tk.Frame(root)
-time_frame.pack(pady=10)
+time_frame.pack(pady=5)
 
-time_label = tk.Label(time_frame, text="Tiempo disponible o hora de finalización:")
+time_label = tk.Label(time_frame, text="Tiempo o finalización:")
 time_label.pack(side=tk.LEFT, padx=5)
 
-time_entry = tk.Entry(time_frame, width=10)
+time_entry = tk.Entry(time_frame, width=8)
 time_entry.pack(side=tk.LEFT, padx=5)
 
 mode_menu = tk.OptionMenu(time_frame, tiempo_var, "Tiempo disponible", "Hora de finalización")
 mode_menu.pack(side=tk.LEFT, padx=5)
 
-pausa_check = tk.Checkbutton(root, text="Pausas entre tareas", variable=pausa_var)
-pausa_check.pack(pady=10)
+pausa_check = tk.Checkbutton(root, text="Pausas", variable=pausa_var)
+pausa_check.pack(pady=5)
 
 tareas_frame = tk.Frame(root)
-tareas_frame.pack(pady=10)
+tareas_frame.pack(pady=5)
 
 scrollbar = tk.Scrollbar(tareas_frame)
 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-tareas_list = tk.Listbox(tareas_frame, height=10, width=50, yscrollcommand=scrollbar.set)
+tareas_list = tk.Listbox(tareas_frame, height=8, width=40, yscrollcommand=scrollbar.set)
 tareas_list.pack(side=tk.LEFT, fill=tk.BOTH)
 scrollbar.config(command=tareas_list.yview)
 
 buttons_frame = tk.Frame(root)
-buttons_frame.pack(pady=10)
+buttons_frame.pack(pady=5)
 
 start_button = tk.Button(buttons_frame, text="Iniciar", command=ejecutar)
-start_button.pack(side=tk.LEFT, padx=10)
+start_button.pack(side=tk.LEFT, padx=5)
 
 pausa_button = tk.Button(buttons_frame, text="Pausar", command=toggle_pausa)
-pausa_button.pack(side=tk.LEFT, padx=10)
+pausa_button.pack(side=tk.LEFT, padx=5)
 
-status_label = tk.Label(root, text="Seleccione un archivo y configure el tiempo para comenzar.")
-status_label.pack(pady=10)
+status_label = tk.Label(root, text="Seleccione un archivo y configure el tiempo.")
+status_label.pack(pady=5)
 
-progreso_bar = tk.ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
-progreso_bar.pack(pady=10)
+progreso_bar = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
+progreso_bar.pack(pady=5)
 
 root.mainloop()

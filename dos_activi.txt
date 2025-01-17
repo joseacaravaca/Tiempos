@@ -1,3 +1,0 @@
-UNO,45
-pausa,10
-DOS,45
