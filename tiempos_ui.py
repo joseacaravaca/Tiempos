@@ -142,6 +142,12 @@ root = tk.Tk()
 root.title("Gestor de Tiempos")
 root.geometry("500x450")
 
+# Establecer icono
+ruta_icono = os.path.join(os.path.dirname(__file__), "activ.png")
+if os.path.exists(ruta_icono):
+    icono = tk.PhotoImage(file=ruta_icono)
+    root.iconphoto(True, icono)
+
 # Variables de control
 file_var = tk.StringVar()
 tiempo_var = tk.StringVar(value="Tiempo disponible")
@@ -164,6 +170,7 @@ time_frame = tk.Frame(root)
 time_frame.pack(pady=5)
 
 time_label = tk.Label(time_frame, text="Tiempo o finalización:")
+
 time_label.pack(side=tk.LEFT, padx=5)
 
 time_entry = tk.Entry(time_frame, width=8)
