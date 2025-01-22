@@ -26,18 +26,8 @@ def calcular_tiempos(actividades, tiempo_disponible):
         tiempos_asignados.append((nombre, round(tiempo_asignado, 2)))
     return tiempos_asignados
 
-# Función para registrar actividades completadas con bloqueo
-registro_lock = threading.Lock()
-def registrar_actividad(nombre_archivo, actividad, tiempo):
-    try:
-        with registro_lock:
-            with open(nombre_archivo, 'a', newline='') as archivo:
-                escritor = csv.writer(archivo)
-                escritor.writerow([datetime.now().strftime('%Y-%m-%d %H:%M:%S'), actividad, tiempo])
-    except Exception as e:
-        print(f"Error al registrar la actividad: {e}")
-
 # Función para registrar en log.csv
+registro_lock = threading.Lock()
 def registrar_log(fecha, hora_inicio, hora_fin, tiempo_total):
     try:
         with registro_lock:
@@ -73,8 +63,6 @@ def iniciar_temporizador(actividades, tiempo_disponible, modo_pausa):
             root.update()
             time.sleep(1)
             tiempo_restante -= 1
-
-        registrar_actividad("registro.csv", actividad, tiempo)
 
         # Cambiar color de tarea completada
         tareas_list.itemconfig(idx, {'fg': 'gray'})
