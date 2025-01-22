@@ -26,33 +26,29 @@ def calcular_tiempos(actividades, tiempo_disponible):
         tiempos_asignados.append((nombre, round(tiempo_asignado, 2)))
     return tiempos_asignados
 
-# Función para registrar actividades completadas con bloqueo
+# Función para registrar en log.csv
 registro_lock = threading.Lock()
-def registrar_actividad(nombre_archivo, actividad, tiempo):
+def registrar_log(fecha, hora_inicio, hora_fin, tiempo_total):
     try:
         with registro_lock:
-            with open(nombre_archivo, 'a', newline='') as archivo:
+            with open("log.csv", 'a', newline='') as archivo:
                 escritor = csv.writer(archivo)
-                escritor.writerow([datetime.now().strftime('%Y-%m-%d %H:%M:%S'), actividad, tiempo])
+                escritor.writerow([fecha, hora_inicio, hora_fin, tiempo_total])
     except Exception as e:
-        print(f"Error al registrar la actividad: {e}")
+        print(f"Error al registrar en log: {e}")
 
-# Función para emitir sonido
-def emitir_sonido(nombre_archivo):
-    ruta_sonido = os.path.join(os.path.dirname(__file__), nombre_archivo)
-    if os.path.exists(ruta_sonido):
-        os.system(f"aplay {ruta_sonido} > /dev/null 2>&1")
-
-# Variables de control globales para pausa
+# Inicializar variable global para pausa
 pausado = False
 
 # Temporizador
-def iniciar_temporizador(actividades, modo_pausa):
+def iniciar_temporizador(actividades, tiempo_disponible, modo_pausa):
     global pausado
+    fecha = datetime.now().strftime('%Y-%m-%d')
+    hora_inicio = datetime.now().strftime('%H:%M:%S')
+
     for idx, (actividad, tiempo) in enumerate(actividades):
         tiempo_restante = tiempo * 60  # Convertir minutos a segundos
         progreso_bar['maximum'] = tiempo_restante
-        tiempo_para_beep = 300  # 5 minutos en segundos
 
         while tiempo_restante > 0:
             if pausado:
@@ -68,22 +64,17 @@ def iniciar_temporizador(actividades, modo_pausa):
             time.sleep(1)
             tiempo_restante -= 1
 
-            # Emitir un beep cada 5 minutos
-            if tiempo_restante % tiempo_para_beep == 0 and tiempo_restante > 0:
-                emitir_sonido("beep.wav")
-
-        emitir_sonido("campana.wav")
-        registrar_actividad("registro.csv", actividad, tiempo)
-
         # Cambiar color de tarea completada
         tareas_list.itemconfig(idx, {'fg': 'gray'})
 
         if modo_pausa:
             messagebox.showinfo("Tarea completada", f"Tarea '{actividad}' completada. Presione OK para continuar.")
 
+    hora_fin = datetime.now().strftime('%H:%M:%S')
+    registrar_log(fecha, hora_inicio, hora_fin, tiempo_disponible)
+
     status_label.config(text="Todas las tareas completadas.", font=("Arial", 12, "bold"))
     progreso_bar['value'] = 0
-    emitir_sonido("fin.wav")
 
 # Función para pausar o reanudar
 def toggle_pausa():
@@ -109,6 +100,7 @@ def ejecutar():
     try:
         if tiempo_var.get() == "Tiempo disponible":
             tiempo_disponible = int(time_entry.get())
+            hora_finalizacion = datetime.now() + timedelta(minutes=tiempo_disponible)
         else:
             hora_actual = datetime.now()
             hora_finalizacion = datetime.strptime(time_entry.get(), "%H:%M").time()
@@ -127,10 +119,13 @@ def ejecutar():
     for actividad, tiempo in resultados:
         tareas_list.insert(tk.END, f"{actividad}: {tiempo} minutos")
 
+    hora_label.config(text=f"Hora prevista de finalización: {hora_finalizacion.strftime('%H:%M')}")
+    tiempo_label.config(text=f"Tiempo programado: {tiempo_disponible} minutos")
+
     modo_pausa = pausa_var.get() == 1
 
     # Iniciar el temporizador en un hilo separado
-    threading.Thread(target=iniciar_temporizador, args=(resultados, modo_pausa), daemon=True).start()
+    threading.Thread(target=iniciar_temporizador, args=(resultados, tiempo_disponible, modo_pausa), daemon=True).start()
 
 # Función para seleccionar archivo
 def seleccionar_archivo():
@@ -140,13 +135,7 @@ def seleccionar_archivo():
 # Configuración de la ventana principal
 root = tk.Tk()
 root.title("Gestor de Tiempos")
-root.geometry("500x450")
-
-# Establecer icono
-ruta_icono = os.path.join(os.path.dirname(__file__), "activ.png")
-if os.path.exists(ruta_icono):
-    icono = tk.PhotoImage(file=ruta_icono)
-    root.iconphoto(True, icono)
+root.geometry("600x500")
 
 # Variables de control
 file_var = tk.StringVar()
@@ -166,11 +155,19 @@ file_entry.pack(side=tk.LEFT, padx=5)
 file_button = tk.Button(file_frame, text="Seleccionar", command=seleccionar_archivo)
 file_button.pack(side=tk.LEFT, padx=5)
 
+info_frame = tk.Frame(root)
+info_frame.pack(pady=5)
+
+tiempo_label = tk.Label(info_frame, text="Tiempo programado: -")
+tiempo_label.pack()
+
+hora_label = tk.Label(info_frame, text="Hora prevista de finalización: -")
+hora_label.pack()
+
 time_frame = tk.Frame(root)
 time_frame.pack(pady=5)
 
 time_label = tk.Label(time_frame, text="Tiempo o finalización:")
-
 time_label.pack(side=tk.LEFT, padx=5)
 
 time_entry = tk.Entry(time_frame, width=8)
