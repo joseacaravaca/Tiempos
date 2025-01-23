@@ -5,6 +5,7 @@ import time
 import os
 import threading
 import csv
+import subprocess  # Para reproducir sonidos en Linux
 
 # Función para leer actividades desde un archivo
 def leer_actividades(nombre_archivo):
@@ -50,6 +51,13 @@ def registrar_log(fecha, hora_inicio, hora_fin, tiempo_total):
 # Inicializar variable global para pausa
 pausado = False
 
+# Función para reproducir sonidos en Linux
+def reproducir_sonido(archivo_sonido):
+    try:
+        subprocess.run(["aplay", archivo_sonido], check=True)
+    except Exception as e:
+        print(f"Error al reproducir sonido: {e}")
+
 # Temporizador
 def iniciar_temporizador(actividades, tiempo_disponible, modo_pausa):
     global pausado
@@ -59,6 +67,9 @@ def iniciar_temporizador(actividades, tiempo_disponible, modo_pausa):
     for idx, (actividad, tiempo) in enumerate(actividades):
         tiempo_restante = tiempo * 60  # Convertir minutos a segundos
         progreso_bar['maximum'] = tiempo_restante
+
+        inicio_actividad = time.time()
+        ultimo_beep = inicio_actividad  # Registrar el inicio de la actividad
 
         while tiempo_restante > 0:
             if pausado:
@@ -74,13 +85,24 @@ def iniciar_temporizador(actividades, tiempo_disponible, modo_pausa):
             time.sleep(1)
             tiempo_restante -= 1
 
+            # Reproducir beep cada 5 minutos
+            if time.time() - ultimo_beep >= 300:  # Revisar si han pasado 5 minutos
+                reproducir_sonido("beep.wav")
+                ultimo_beep = time.time()  # Actualizar el tiempo del último beep
+
         registrar_actividad("registro.csv", actividad, tiempo)
+
+        # Reproducir sonido al finalizar actividad
+        reproducir_sonido("campana.wav")
 
         # Cambiar color de tarea completada
         tareas_list.itemconfig(idx, {'fg': 'gray'})
 
         if modo_pausa:
             messagebox.showinfo("Tarea completada", f"Tarea '{actividad}' completada. Presione OK para continuar.")
+
+    # Reproducir sonido al finalizar todas las actividades
+    reproducir_sonido("fin.wav")
 
     hora_fin = datetime.now().strftime('%H:%M:%S')
     registrar_log(fecha, hora_inicio, hora_fin, tiempo_disponible)
@@ -148,6 +170,10 @@ def seleccionar_archivo():
 root = tk.Tk()
 root.title("Gestor de Tiempos")
 root.geometry("600x500")
+
+# Establecer icono de la aplicación
+icono = tk.PhotoImage(file="activ.png")
+root.iconphoto(True, icono)
 
 # Variables de control
 file_var = tk.StringVar()
