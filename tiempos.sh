@@ -10,4 +10,5 @@ if [ ! -f "$RUTA_SCRIPT" ]; then
 fi
 
 # Abrir ejecutar el script
+source ~/Python/mvenv/bin/activate
 python3 "$RUTA_SCRIPT"
