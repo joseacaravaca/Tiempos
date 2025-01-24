@@ -33,7 +33,7 @@ registro_lock = threading.Lock()
 def registrar_actividad(nombre_archivo, actividad, tiempo):
     try:
         with registro_lock:
-            with open(nombre_archivo, 'a', newline='') as archivo:
+            with open(nombre_archivo, 'a') as archivo:
                 escritor = csv.writer(archivo)
                 escritor.writerow([datetime.now().strftime('%Y-%m-%d %H:%M:%S'), actividad, tiempo])
     except Exception as e:
@@ -43,7 +43,7 @@ def registrar_actividad(nombre_archivo, actividad, tiempo):
 def registrar_log(fecha, hora_inicio, hora_fin, tiempo_total):
     try:
         with registro_lock:
-            with open("log.csv", 'a', newline='') as archivo:
+            with open("log.csv", 'a') as archivo:
                 escritor = csv.writer(archivo)
                 escritor.writerow([fecha, hora_inicio, hora_fin, tiempo_total])
     except Exception as e:
@@ -170,7 +170,7 @@ def seleccionar_archivo():
         file_var.set(archivo)
 
 # Configuración de la ventana principal
-root = tb.Window(themename="darkly")  # Usar tema moderno
+root = tb.Window(themename="cosmo")  # Usar tema moderno
 root.title("Gestor de Tiempos")
 root.geometry("500x500")
 
