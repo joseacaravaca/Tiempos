@@ -172,7 +172,7 @@ def seleccionar_archivo():
 # Configuración de la ventana principal
 root = tb.Window(themename="darkly")  # Usar tema moderno
 root.title("Gestor de Tiempos")
-root.geometry("500x400")
+root.geometry("500x500")
 
 # Establecer icono de la aplicación
 icono = tk.PhotoImage(file="activ.png")
