@@ -164,15 +164,13 @@ def ejecutar():
 
 # Función para seleccionar archivo
 def seleccionar_archivo():
-    archivo_completo = filedialog.askopenfilename(filetypes=[("Archivos *.act", "*.act")])
-    if archivo_completo:
-        archivo = os.path.basename(archivo_completo)  # Obtener solo el nombre del archivo
-        file_var.set(archivo)
+    archivo = filedialog.askopenfilename(filetypes=[("Archivos *.act", "*.act")])
+    file_var.set(archivo)
 
 # Configuración de la ventana principal
 root = tb.Window(themename="darkly")  # Usar tema moderno
 root.title("Gestor de Tiempos")
-root.geometry("500x400")
+root.geometry("700x600")
 
 # Establecer icono de la aplicación
 icono = tk.PhotoImage(file="activ.png")
@@ -190,7 +188,7 @@ frame_superior.pack(fill=tk.X)
 file_label = tb.Label(frame_superior, text="Archivo de actividades:", font=("Arial", 12))
 file_label.pack(side=tk.LEFT, padx=5)
 
-file_entry = tb.Entry(frame_superior, textvariable=file_var, width=20, bootstyle="info")
+file_entry = tb.Entry(frame_superior, textvariable=file_var, width=40, bootstyle="info")
 file_entry.pack(side=tk.LEFT, padx=5)
 
 file_button = tb.Button(frame_superior, text="Seleccionar", command=seleccionar_archivo, bootstyle="primary")
@@ -211,7 +209,7 @@ frame_tiempo.pack(fill=tk.X)
 time_label = tb.Label(frame_tiempo, text="Tiempo o finalización:", font=("Arial", 12))
 time_label.pack(side=tk.LEFT, padx=5)
 
-time_entry = tb.Entry(frame_tiempo, width=8, bootstyle="info")
+time_entry = tb.Entry(frame_tiempo, width=10, bootstyle="info")
 time_entry.pack(side=tk.LEFT, padx=5)
 
 mode_menu = tb.OptionMenu(frame_tiempo, tiempo_var, "Tiempo disponible", "Hora de finalización")
@@ -226,7 +224,7 @@ frame_tareas.pack(fill=tk.BOTH, expand=True)
 scrollbar = tb.Scrollbar(frame_tareas)
 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-tareas_list = tk.Listbox(frame_tareas, height=5, width=25, yscrollcommand=scrollbar.set, font=("Arial", 10))
+tareas_list = tk.Listbox(frame_tareas, height=10, width=50, yscrollcommand=scrollbar.set, font=("Arial", 10))
 tareas_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 scrollbar.config(command=tareas_list.yview)
 
@@ -242,7 +240,7 @@ pausa_button.pack(side=tk.LEFT, padx=10)
 status_label = tb.Label(root, text="Seleccione un archivo y configure el tiempo.", font=("Arial", 12), bootstyle="secondary")
 status_label.pack(pady=10)
 
-progreso_bar = tb.Progressbar(root, orient="horizontal", length=300, mode="determinate", bootstyle="info")
+progreso_bar = tb.Progressbar(root, orient="horizontal", length=400, mode="determinate", bootstyle="info")
 progreso_bar.pack(pady=10)
 
 root.mainloop()

@@ -1,12 +1,11 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import ttk, filedialog, messagebox
 from datetime import datetime, timedelta
 import time
 import os
 import threading
 import csv
 import subprocess  # Para reproducir sonidos en Linux
-import ttkbootstrap as tb  # Librería para un entorno gráfico más moderno
 
 # Función para leer actividades desde un archivo
 def leer_actividades(nombre_archivo):
@@ -33,7 +32,7 @@ registro_lock = threading.Lock()
 def registrar_actividad(nombre_archivo, actividad, tiempo):
     try:
         with registro_lock:
-            with open(nombre_archivo, 'a', newline='') as archivo:
+            with open(nombre_archivo, 'a') as archivo:
                 escritor = csv.writer(archivo)
                 escritor.writerow([datetime.now().strftime('%Y-%m-%d %H:%M:%S'), actividad, tiempo])
     except Exception as e:
@@ -43,7 +42,7 @@ def registrar_actividad(nombre_archivo, actividad, tiempo):
 def registrar_log(fecha, hora_inicio, hora_fin, tiempo_total):
     try:
         with registro_lock:
-            with open("log.csv", 'a', newline='') as archivo:
+            with open("log.csv", 'a') as archivo:
                 escritor = csv.writer(archivo)
                 escritor.writerow([fecha, hora_inicio, hora_fin, tiempo_total])
     except Exception as e:
@@ -74,13 +73,13 @@ def iniciar_temporizador(actividades, tiempo_disponible, modo_pausa):
 
         while tiempo_restante > 0:
             if pausado:
-                status_label.config(text="PAUSA")
+                status_label.config(text="PAUSA", font=("Arial", 12, "bold"))
                 root.update()
                 time.sleep(1)
                 continue
 
             minutos, segundos = divmod(tiempo_restante, 60)
-            status_label.config(text=f"Tarea: {actividad} - {int(minutos):02d}:{int(segundos):02d}")
+            status_label.config(text=f"Tarea: {actividad} - {int(minutos):02d}:{int(segundos):02d}", font=("Arial", 12, "bold"))
             progreso_bar['value'] = tiempo_restante
             root.update()
             time.sleep(1)
@@ -108,7 +107,7 @@ def iniciar_temporizador(actividades, tiempo_disponible, modo_pausa):
     hora_fin = datetime.now().strftime('%H:%M:%S')
     registrar_log(fecha, hora_inicio, hora_fin, tiempo_disponible)
 
-    status_label.config(text="Todas las tareas completadas.")
+    status_label.config(text="Todas las tareas completadas.", font=("Arial", 12, "bold"))
     progreso_bar['value'] = 0
 
 # Función para pausar o reanudar
@@ -164,15 +163,13 @@ def ejecutar():
 
 # Función para seleccionar archivo
 def seleccionar_archivo():
-    archivo_completo = filedialog.askopenfilename(filetypes=[("Archivos *.act", "*.act")])
-    if archivo_completo:
-        archivo = os.path.basename(archivo_completo)  # Obtener solo el nombre del archivo
-        file_var.set(archivo)
+    archivo = filedialog.askopenfilename(filetypes=[("Archivos *.act", "*.act")])
+    file_var.set(archivo)
 
 # Configuración de la ventana principal
-root = tb.Window(themename="darkly")  # Usar tema moderno
+root = tk.Tk()
 root.title("Gestor de Tiempos")
-root.geometry("500x400")
+root.geometry("600x500")
 
 # Establecer icono de la aplicación
 icono = tk.PhotoImage(file="activ.png")
@@ -184,65 +181,65 @@ tiempo_var = tk.StringVar(value="Tiempo disponible")
 pausa_var = tk.IntVar(value=1)
 
 # Widgets
-frame_superior = tb.Frame(root, padding=10)
-frame_superior.pack(fill=tk.X)
+file_frame = tk.Frame(root)
+file_frame.pack(pady=5)
 
-file_label = tb.Label(frame_superior, text="Archivo de actividades:", font=("Arial", 12))
+file_label = tk.Label(file_frame, text="Archivo de actividades:")
 file_label.pack(side=tk.LEFT, padx=5)
 
-file_entry = tb.Entry(frame_superior, textvariable=file_var, width=20, bootstyle="info")
+file_entry = tk.Entry(file_frame, textvariable=file_var, width=30)
 file_entry.pack(side=tk.LEFT, padx=5)
 
-file_button = tb.Button(frame_superior, text="Seleccionar", command=seleccionar_archivo, bootstyle="primary")
+file_button = tk.Button(file_frame, text="Seleccionar", command=seleccionar_archivo)
 file_button.pack(side=tk.LEFT, padx=5)
 
-frame_info = tb.Frame(root, padding=10)
-frame_info.pack(fill=tk.X)
+info_frame = tk.Frame(root)
+info_frame.pack(pady=5)
 
-tiempo_label = tb.Label(frame_info, text="Tiempo programado: -", font=("Arial", 12))
-tiempo_label.pack(anchor="w")
+tiempo_label = tk.Label(info_frame, text="Tiempo programado: -")
+tiempo_label.pack()
 
-hora_label = tb.Label(frame_info, text="Hora prevista de finalización: -", font=("Arial", 12))
-hora_label.pack(anchor="w")
+hora_label = tk.Label(info_frame, text="Hora prevista de finalización: -")
+hora_label.pack()
 
-frame_tiempo = tb.Frame(root, padding=10)
-frame_tiempo.pack(fill=tk.X)
+time_frame = tk.Frame(root)
+time_frame.pack(pady=5)
 
-time_label = tb.Label(frame_tiempo, text="Tiempo o finalización:", font=("Arial", 12))
+time_label = tk.Label(time_frame, text="Tiempo o finalización:")
 time_label.pack(side=tk.LEFT, padx=5)
 
-time_entry = tb.Entry(frame_tiempo, width=8, bootstyle="info")
+time_entry = tk.Entry(time_frame, width=8)
 time_entry.pack(side=tk.LEFT, padx=5)
 
-mode_menu = tb.OptionMenu(frame_tiempo, tiempo_var, "Tiempo disponible", "Hora de finalización")
+mode_menu = tk.OptionMenu(time_frame, tiempo_var, "Tiempo disponible", "Hora de finalización")
 mode_menu.pack(side=tk.LEFT, padx=5)
 
-pausa_check = tb.Checkbutton(root, text="Pausas", variable=pausa_var, bootstyle="success")
-pausa_check.pack(pady=10)
+pausa_check = tk.Checkbutton(root, text="Pausas", variable=pausa_var)
+pausa_check.pack(pady=5)
 
-frame_tareas = tb.Frame(root, padding=10)
-frame_tareas.pack(fill=tk.BOTH, expand=True)
+tareas_frame = tk.Frame(root)
+tareas_frame.pack(pady=5)
 
-scrollbar = tb.Scrollbar(frame_tareas)
+scrollbar = tk.Scrollbar(tareas_frame)
 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-tareas_list = tk.Listbox(frame_tareas, height=5, width=25, yscrollcommand=scrollbar.set, font=("Arial", 10))
-tareas_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+tareas_list = tk.Listbox(tareas_frame, height=8, width=40, yscrollcommand=scrollbar.set)
+tareas_list.pack(side=tk.LEFT, fill=tk.BOTH)
 scrollbar.config(command=tareas_list.yview)
 
-frame_botones = tb.Frame(root, padding=10)
-frame_botones.pack()
+buttons_frame = tk.Frame(root)
+buttons_frame.pack(pady=5)
 
-start_button = tb.Button(frame_botones, text="Iniciar", command=ejecutar, bootstyle="success")
-start_button.pack(side=tk.LEFT, padx=10)
+start_button = tk.Button(buttons_frame, text="Iniciar", command=ejecutar)
+start_button.pack(side=tk.LEFT, padx=5)
 
-pausa_button = tb.Button(frame_botones, text="Pausar", command=toggle_pausa, bootstyle="warning")
-pausa_button.pack(side=tk.LEFT, padx=10)
+pausa_button = tk.Button(buttons_frame, text="Pausar", command=toggle_pausa)
+pausa_button.pack(side=tk.LEFT, padx=5)
 
-status_label = tb.Label(root, text="Seleccione un archivo y configure el tiempo.", font=("Arial", 12), bootstyle="secondary")
-status_label.pack(pady=10)
+status_label = tk.Label(root, text="Seleccione un archivo y configure el tiempo.")
+status_label.pack(pady=5)
 
-progreso_bar = tb.Progressbar(root, orient="horizontal", length=300, mode="determinate", bootstyle="info")
-progreso_bar.pack(pady=10)
+progreso_bar = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
+progreso_bar.pack(pady=5)
 
 root.mainloop()
