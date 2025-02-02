@@ -163,7 +163,7 @@ def ejecutar():
 
 # Función para seleccionar archivo
 def seleccionar_archivo():
-    archivo_completo = filedialog.askopenfilename(filetypes=[("Archivos *.act", "*.act")])
+    archivo_completo = filedialog.askopenfilename(filetypes=[("Archivos *.act", "*.act")],initialdir="scrips/")
     if archivo_completo:
         archivo = os.path.basename(archivo_completo)  # Obtener solo el nombre del archivo
         file_var.set("scrips/" + archivo)
