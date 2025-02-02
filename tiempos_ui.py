@@ -6,8 +6,7 @@ import os
 import threading
 import csv
 import subprocess  # Para reproducir sonidos en Linux
-import ttkbootstrap as tb  # Librería para un entorno gráfico más moderno
-
+import ttkbootstrap as tb  # Librería entorno gráfico
 # Función para leer actividades desde un archivo
 def leer_actividades(nombre_archivo):
     actividades = []
@@ -167,7 +166,7 @@ def seleccionar_archivo():
     archivo_completo = filedialog.askopenfilename(filetypes=[("Archivos *.act", "*.act")])
     if archivo_completo:
         archivo = os.path.basename(archivo_completo)  # Obtener solo el nombre del archivo
-        file_var.set(archivo)
+        file_var.set("scrips/" + archivo)
 
 # Configuración de la ventana principal
 root = tb.Window(themename="cosmo")  # Usar tema moderno
