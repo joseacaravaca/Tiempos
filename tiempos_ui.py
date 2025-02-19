@@ -34,7 +34,7 @@ def registrar_actividad(nombre_archivo, actividad, tiempo):
         with registro_lock:
             with open(nombre_archivo, 'a') as archivo:
                 escritor = csv.writer(archivo)
-                escritor.writerow([datetime.now().strftime('%Y-%m-%d %H:%M:%S'), actividad, tiempo])
+                escritor.writerow([datetime.now().strftime('%Y-%m-%d %H:%M:%S'), actividad, f"{tiempo:.1f}"])
     except Exception as e:
         print(f"Error al registrar la actividad: {e}")
 
@@ -44,12 +44,15 @@ def registrar_log(fecha, hora_inicio, hora_fin, tiempo_total):
         with registro_lock:
             with open("log.csv", 'a') as archivo:
                 escritor = csv.writer(archivo)
-                escritor.writerow([fecha, hora_inicio, hora_fin, tiempo_total])
+                escritor.writerow([fecha, hora_inicio, hora_fin, f"{tiempo_total:.1f}"])
     except Exception as e:
         print(f"Error al registrar en log: {e}")
 
 # Inicializar variable global para pausa
 pausado = False
+
+# Inicializar variable global para finalizar
+finalizar = False
 
 # Función para reproducir sonidos en Linux
 def reproducir_sonido(archivo_sonido):
@@ -58,9 +61,15 @@ def reproducir_sonido(archivo_sonido):
     except Exception as e:
         print(f"Error al reproducir sonido: {e}")
 
+# Función para finalizar la ejecución
+def finalizar_ejecucion():
+    global finalizar
+    if messagebox.askyesno("Confirmar", "¿Está seguro de que desea finalizar la ejecución?"):
+        finalizar = True
+
 # Temporizador
 def iniciar_temporizador(actividades, tiempo_disponible, modo_pausa):
-    global pausado
+    global pausado, finalizar
     fecha = datetime.now().strftime('%Y-%m-%d')
     hora_inicio = datetime.now().strftime('%H:%M:%S')
 
@@ -72,6 +81,14 @@ def iniciar_temporizador(actividades, tiempo_disponible, modo_pausa):
         ultimo_beep = inicio_actividad  # Registrar el inicio de la actividad
 
         while tiempo_restante > 0:
+            if finalizar:
+                registrar_actividad("registro.csv", actividad, tiempo - (tiempo_restante / 60))
+                hora_fin = datetime.now().strftime('%H:%M:%S')
+                registrar_log(fecha, hora_inicio, hora_fin, tiempo_disponible - (tiempo_restante / 60))
+                status_label.config(text="Ejecución finalizada.")
+                progreso_bar['value'] = 0
+                return
+
             if pausado:
                 status_label.config(text="PAUSA")
                 root.update()
@@ -237,6 +254,9 @@ start_button.pack(side=tk.LEFT, padx=10)
 
 pausa_button = tb.Button(frame_botones, text="Pausar", command=toggle_pausa, bootstyle="warning")
 pausa_button.pack(side=tk.LEFT, padx=10)
+
+finalizar_button = tb.Button(frame_botones, text="Finalizar", command=finalizar_ejecucion, bootstyle="danger")
+finalizar_button.pack(side=tk.LEFT, padx=10)
 
 status_label = tb.Label(root, text="Seleccione un archivo y configure el tiempo.", font=("Arial", 12), bootstyle="secondary")
 status_label.pack(pady=10)
